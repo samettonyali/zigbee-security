@@ -15,9 +15,15 @@ This is kept in a separate repository, and can be accessed at:
 
 The !KillerBee framework was launched by Joshua Wright, and has undergone major updates by Ricky and Ryan of the Api-do project. It is currently considered the main toolkit of the Api-do project.
 
+
 = Scapy dot15d4 =
 
-TODO
+We have added support for the IEEE 802.15.4 layer to the popular Scapy packet manipulation software. The file is `layers/dot15d4.py` which is currently maintained in the `scapy-com` (community) repository.
+ * http://hg.secdev.org/scapy-com
+ * Uses [http://mercurial.selenic.com/ Mercurial]: `hg clone http://hg.secdev.org/scapy-com`
+
+(This layer has also been used as the basis for the 6lowWPAN layer added to Scapy by another maintainer.)
+
 
 = !KillerBee "Extras" Tools =
 
@@ -34,7 +40,7 @@ and assigns them sequentially across all channels. It optionally
 interfaces with a gpsd daemon (reading from a standard serial GPS
 device) to add GPS data.
 
-== !zbWarDrive ==
+== zbWarDrive ==
 
 zbWarDrive is a tool that seeks to achieve optimal coverage of networks
 with using only the available capture interfaces. It discovers
