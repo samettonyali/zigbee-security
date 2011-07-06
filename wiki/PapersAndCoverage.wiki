@@ -11,23 +11,25 @@ Goodspeed, T.; Bratus, S.; Melgares, R; Speers, R.; Shapiro, R. Packets in Packe
   * [http://www.usenix.org/events/woot11/tech/final_files/Goodspeed.pdf Paper]
   * [http://www.usenix.org/events/woot11/tech/techAbstracts.html#Goodspeed Abstract]
 
+
 = Conference Presentations =
 
-== ToorCon Seattle '11: 802.15.4 Security: Find, Fix, Finish ==
+== !ToorCon Seattle '11: Tools for Practical Exploration of the 802.15.4 Attack Surface ==
+  * [http://seattle.toorcon.org/2011/conference.php?id=16 Abstract]
+  * [http://code.google.com/p/zigbee-security/downloads/detail?name=802154_Speers_ToorConSeattle_PDF.pdf PDF of Slides]
 
-TODO
+== !SchmooCon '11: !ZigBee Security: Find, Fix, Finish ==
+  * [http://www.youtube.com/watch?v=SvCbIOwblqM&feature=player_embedded Video of Presentation]
+  * [http://code.google.com/p/zigbee-security/downloads/detail?name=ZigBeeFFF_SlidesPDF.pdf PDF of Slides]
 
-== SchmooCon '11: ZigBee Security: Find, Fix, Finish ==
-
-TODO
 
 = Technical Reports =
 
   * Ryan M. Speers, "[http://www.cs.dartmouth.edu/reports/abstracts/TR2011-687/ IEEE 802.15.4 Wireless Security: Self-Assessment Frameworks]." Dartmouth Computer Science Technical Report TR2011-687, June 2011.
 
-  * Ricky A. Melgares, "[http://www.cs.dartmouth.edu/reports/abstracts/TR2011-689/ 802.15.4/!ZigBee Analysis and Security: tools for practical exploration of the attack surface]." Dartmouth Computer Science Technical Report TR2011-689, June 2011.
+  * Ricky A. Melgares, "[http://www.cs.dartmouth.edu/reports/abstracts/TR2011-689/ 802.15.4/ZigBee Analysis and Security: tools for practical exploration of the attack surface]." Dartmouth Computer Science Technical Report TR2011-689, June 2011.
 
 
 = News Coverage =
 
-* Digital Bond, [http://www.digitalbond.com/2011/04/15/friday-news-and-notes-130/ Friday News and Notes], Worth Reading Articles: Ryan Speers blog entry: [http://rmspeers.com/archives/189 GoodFET Development on Tmote Sky TelosB (CC2420 Radio)]
+  * Digital Bond, [http://www.digitalbond.com/2011/04/15/friday-news-and-notes-130/ Friday News and Notes], Worth Reading Articles: Ryan Speers blog entry: [http://rmspeers.com/archives/189 GoodFET Development on Tmote Sky TelosB (CC2420 Radio)]
