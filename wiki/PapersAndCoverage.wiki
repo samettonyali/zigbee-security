@@ -1,0 +1,33 @@
+#summary Links to published papers, conference talks, technical reports, and news coverage of the project.
+#labels Featured,Phase-Design
+
+= Published Papers =
+
+== USENIX WOOT 2011: Packets in Packets ==
+
+Goodspeed, T.; Bratus, S.; Melgares, R; Speers, R.; Shapiro, R. Packets in Packets: Orson Welles’ In-Band Signaling Attacks for Modern Radios. 20th USENIX Security Symposium. 2011.
+
+  * Developed technique for injecting malicious Layer 1 frames using the 802.15.4 tools and software developed under Api-do.
+  * [http://www.usenix.org/events/woot11/tech/final_files/Goodspeed.pdf Paper]
+  * [http://www.usenix.org/events/woot11/tech/techAbstracts.html#Goodspeed Abstract]
+
+= Conference Presentations =
+
+== ToorCon Seattle '11: 802.15.4 Security: Find, Fix, Finish ==
+
+TODO
+
+== SchmooCon '11: ZigBee Security: Find, Fix, Finish ==
+
+TODO
+
+= Technical Reports =
+
+  * Ryan M. Speers, "[http://www.cs.dartmouth.edu/reports/abstracts/TR2011-687/ IEEE 802.15.4 Wireless Security: Self-Assessment Frameworks]." Dartmouth Computer Science Technical Report TR2011-687, June 2011.
+
+  * Ricky A. Melgares, "[http://www.cs.dartmouth.edu/reports/abstracts/TR2011-689/ 802.15.4/!ZigBee Analysis and Security: tools for practical exploration of the attack surface]." Dartmouth Computer Science Technical Report TR2011-689, June 2011.
+
+
+= News Coverage =
+
+* Digital Bond, [http://www.digitalbond.com/2011/04/15/friday-news-and-notes-130/ Friday News and Notes], Worth Reading Articles: Ryan Speers blog entry: [http://rmspeers.com/archives/189 GoodFET Development on Tmote Sky TelosB (CC2420 Radio)]
