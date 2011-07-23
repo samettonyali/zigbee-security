@@ -4,3 +4,5 @@
 = Codebase =
 
 || <wiki:gadget url="http://www.ohloh.net/p/api-do/widgets/project_basic_stats.xml" height="220" border="1" /> || <wiki:gadget url="http://www.ohloh.net/p/api-do/widgets/project_languages.xml" width="340" height="200" border="1" /> ||
+
+We have tried as much as possible to limit Ohloh to running these statistics only on project code directly related to this project (aka not including Scapy framework, etc) and also not including automatic documentation files, etc.
