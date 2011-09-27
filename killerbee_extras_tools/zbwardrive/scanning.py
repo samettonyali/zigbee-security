@@ -12,7 +12,7 @@ from capture import startCapture
 from scapy.all import Dot15d4, Dot15d4Beacon
 
 # doScan_processResponse
-def doScan_processResponse(packet, channel, zbdb, kbscan, verbose):
+def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
     scapyd = Dot15d4(packet['bytes'])
     # Check if this is a beacon frame
     if isinstance(scapyd.payload, Dot15d4Beacon):
@@ -30,8 +30,12 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose):
                 #print scapyd.show()
             # Store the network in local database so we treat it as already discovered by this program:
             zbdb.store_networks(key, spanid, source, channel, packet['bytes'])
-            # If possible, log the new network to the remote packet database:
-            kbscan.dblog.add_packet(full=packet, scapy=scapyd)
+            # Log to the mysql db or to the appropriate pcap file
+            if arg_dblog == True:
+                kbscan.dblog.add_packet(full=packet, scapy=scapyd)
+            else:
+                #TODO log this to a PPI pcap file maybe, so the packet is not lost? or print to screen?
+                pass
             return key
         else: #network designated by key is already being logged
             if verbose: print 'Received frame is a beacon for a network we already found and are logging.'
@@ -41,10 +45,11 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose):
 # --- end of doScan_processResponse ---
 
 # doScan
-def doScan(zbdb, verbose):
+def doScan(zbdb, verbose, arg_dblog):
     # Choose a device for injection scanning:
     scannerDevId = zbdb.get_devices_nextFree()
-    kbscan = KillerBee(device=scannerDevId, datasource="Wardrive Live")
+    # log to online mysql db or to some local pcap files?
+    kbscan = KillerBee(device=scannerDevId, datasource=("Wardrive Live" if arg_dblog else None))
     #  we want one that can do injection
     inspectedDevs = []
     while (kbscan.check_capability(KBCapabilities.INJECT) == False):
@@ -52,8 +57,9 @@ def doScan(zbdb, verbose):
         inspectedDevs.append(scannerDevId)
         kbscan.close()
         scannerDevId = zbdb.get_devices_nextFree()
-        if scannerDevId == None: raise Exception("Error: No free devices capable of injection were found.")
-        kbscan = KillerBee(device=scannerDevId, datsource="Wardrive Live")
+        if scannerDevId == None:
+            raise Exception("Error: No free devices capable of injection were found.")
+        kbscan = KillerBee(device=scannerDevId, datasource=("Wardrive Live" if arg_dblog else None))
     #  return devices that we didn't choose to the free state
     for inspectedDevId in inspectedDevs:
         zbdb.update_devices_status(inspectedDevId, 'Free')
@@ -73,17 +79,14 @@ def doScan(zbdb, verbose):
         try:
             #if verbose: print 'Setting channel to %d' % channel
             kbscan.set_channel(channel)
-        except Exception, e:
-            print 'Error: Failed to set channel to %d' % channel
-            print e
-            sys.exit(-1)
+        except Exception as e:
+            raise Exception('Failed to set channel to %d (%s).' % (channel,e))
         if verbose: print 'Injecting a beacon request on channel %d.' % channel
         try:
             beaconinj = ''.join([beaconp1, "%c" % seqnum, beaconp2])
             kbscan.inject(beaconinj)
         except Exception, e:
-            print 'Error: Unable to inject packet', e
-            sys.exit(-1)
+            raise Exception('Unable to inject packet (%s).' % e)
 
         # Process packets for 2 seconds looking for the beacon response frame
         start = time.time()
@@ -92,9 +95,9 @@ def doScan(zbdb, verbose):
             # Check for empty packet (timeout) and valid FCS
             if recvpkt != None and recvpkt[1]:
                 #if verbose: print "Received frame."
-                newNetwork = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose)
+                newNetwork = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, arg_dblog)
                 if newNetwork != None:
-                    startCapture(zbdb, newNetwork)
+                    startCapture(zbdb, newNetwork, arg_dblog)
         kbscan.sniffer_off()
         seqnum += 1
         channel += 1
