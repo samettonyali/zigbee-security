@@ -32,7 +32,7 @@ def startScan(zbdb, arg_verbose):
         #print 'Error: Missing KillerBee USB hardware:', e
         print 'Error: Issue starting KillerBee instance:', e
         sys.exit(1)
-    kbdev_info = kb.dev_list()
+    kbdev_info = kbutils.devlist()
     kb.close()
     for i in range(0, len(kbdev_info)):
         print 'Found device at %s: \'%s\'' % (kbdev_info[i][0], kbdev_info[i][1])
