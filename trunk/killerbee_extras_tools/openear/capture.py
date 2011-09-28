@@ -45,7 +45,8 @@ class CaptureThread(threading.Thread):
             packet = self.kb.pnext()
             if packet != None:
                 self.packetcount+=1
-                self.kb.dblog.add_packet(full=packet)
+                try:    self.kb.dblog.add_packet(full=packet)
+                except: pass #temporary hack. should migrate exception handling from zbwardrive
                 self.pd.pcap_dump(packet[0])
         # trigger threading.Event set to false, so shutdown thread
         self.kb.sniffer_off()
