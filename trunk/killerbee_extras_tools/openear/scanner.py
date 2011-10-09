@@ -13,6 +13,8 @@ import Queue
 session = ""
 active_queues = []
 arg_verbose = False
+arg_ppi = False
+arg_db = False
 arg_gps = False
 arg_gps_devstring = ""
 latitude = ""
@@ -59,10 +61,9 @@ class LocationThread(threading.Thread):
             else:
                 end_time = datetime.datetime.now()
                 elapsed_time = end_time - last_seen
-                print chr(0x1b) + "[2;5fLast change seen %d seconds ago." % elapsed_time 
+                print chr(0x1b) + "[2;5fElapsed time since last location change: %s" % str(elapsed_time) 
             print chr(0x1b) + "[3;5fLat: %f, Long: %f, Alt: %f." % (latitude, longitude, altitude)
-
-            time.sleep(2)
+            time.sleep(1)
  
 
 class CaptureThread(threading.Thread):
@@ -73,6 +74,7 @@ class CaptureThread(threading.Thread):
         self.mesg = Queue.Queue()
         active_queues.append(self.mesg)
         self.channel = channel
+        self.freq = (channel - 10) * 5 + 2400
         self.dev = dev
         self.pd = pd
         self.packetcount = 0
@@ -80,11 +82,9 @@ class CaptureThread(threading.Thread):
     def run(self):
         global active_queues
         global longitude, latitude, altitude
-        self.kb = KillerBee(device=self.dev, datasource="Wardrive Live")
+        self.kb = KillerBee(device=self.dev)
         self.kb.set_channel(self.channel)
         self.kb.sniffer_on()
-
-        #print "Capturing on \'%s\' at channel %d." % (self.kb.get_dev_info()[0], self.channel)
         
         # loop capturing packets to dblog and file
         message = ""
@@ -100,12 +100,12 @@ class CaptureThread(threading.Thread):
                 self.packetcount+=1
                 if arg_gps:
                     gpsdata = (longitude, latitude, altitude)
-                    self.kb.dblog.add_packet(full=packet, location=gpsdata)
+                    self.pd.pcap_dump(packet['bytes'], ant_dbm=packet['dbm'], freq_mhz=self.freq, location=map(float, gpsdata))
+                    if arg_db:self.kb.dblog.add_packet(full=packet, location=gpsdata)
                 else:
-                    self.kb.dblog.add_packet(full=packet)
-                self.pd.pcap_dump(packet[0])
-                if arg_verbose:
-                    print chr(0x1b) + "[%d;5fChannel %d: %d packets captured." % (self.channel - 7, self.channel, self.packetcount)
+                    self.pd.pcap_dump(packet['bytes'])
+                    if arg_db:self.kb.dblog.add_packet(full=packet)
+                print chr(0x1b) + "[%d;5fChannel %d: %d packets captured." % (self.channel - 6, self.channel, self.packetcount)
         # trigger threading.Event set to false, so shutdown thread
         if arg_verbose:
             print "%s on channel %d shutting down..." % (threading.currentThread().getName(), self.channel)
@@ -129,27 +129,17 @@ def main(args):
     # parse command line options
     while len(args) > 1:
         op = args.pop(1)
-        if op == '-v':
+        if op == '-v':                          # Verbose mode
             arg_verbose = True
-        if op == '-g':
+        if op == '-g':                          # GPS device
             arg_gps_devstring = sys.argv.pop(1)
             arg_gps = True
+        if op == '-p':                          # PCAP PPI geolocation support
+            arg_ppi = True
+        if op == '-d':                          # Database logging
+            arg_db = True
 
     signal.signal(signal.SIGINT, signal_handler)
-
-    #if arg_gps == True:
-    #    print "Initializing GPS device %s ... "% (arg_gps_devstring),
-    #    session = gps.gps()
-    #    session.poll()
-    #    session.stream()
-    #    print "Waiting for fix... ",
-    #    while(session.fix.mode == 1):
-    #        session.poll()
-    #    print "Fix acquired!"
-    #    t = LocationThread()
-    #    t.start()
-
-    #    time.sleep(2)
 
     if arg_gps:
         kbdev_info = kbutils.devlist(gps=arg_gps_devstring)
@@ -170,6 +160,7 @@ def main(args):
         print "Fix acquired!"
         t = LocationThread()
         t.start()
+    time.sleep(2)
     for i in range(0, len(kbdev_info)):
             if kbdev_info[i][0] == arg_gps_devstring:
                 print "Skipping device %s" % arg_gps_devstring
@@ -179,12 +170,10 @@ def main(args):
                     print '\tAssigning to channel %d.' % channel
                 timeLabel = datetime.datetime.now().strftime('%Y%m%d-%H%M')
                 fname = 'zb_c%s_%s.pcap' % (channel, timeLabel) #fname is -w equiv
-                pcap = PcapDumper(DLT_IEEE802_15_4, fname)
+                pcap = PcapDumper(DLT_IEEE802_15_4, fname, ppi=arg_ppi)
                 t = CaptureThread(kbdev_info[i][0], channel, pcap)
                 t.start()
                 channel += 1
-    print "Waiting for devices to initialize..."
-    time.sleep(4)
     os.system('clear')
     print chr(0x1b) + "[1;5fLive Stats:"
     while True: pass
