@@ -11,8 +11,16 @@ on multiple channels, or fast-frequency-hopping, etc. It expects
 multiple interfaces, preferably one per 802.15.4 channel, to use
 and assigns them sequentially across all channels. It optionally
 interfaces with a gpsd daemon (reading from a standard serial GPS
-device) to add GPS data.
+device) to add GPS data. Please note that the device name of the
+GPS device must be passed to Killerbee using the -g option, 
+so that it may be ignored, as otherwise the device initializing 
+process will "fuzz" the gps device and daemon. Running it with 
+the -d option attempts to log data to a database using the Killerbee 
+DBLogger (killerbee/dblog.py). Running it with the -p option includes 
+location information in the PCAP using the CACE PPI standard.
 
+Example usage:
+sudo python scanner.py -d /dev/ttyUSB0 -p
 
 = zbwardrive =
 
