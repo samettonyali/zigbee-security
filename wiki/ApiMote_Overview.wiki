@@ -1,0 +1,23 @@
+#summary Information about the Api-Mote hardware and usage.
+#labels Phase-Design,Phase-Deploy,Phase-Support
+
+= Introduction =
+
+This is intended as a brief guide. Full documentation should be obtained from the datasheet, user guide, common sense, the source code, or asking for assistance.
+
+= Compile and Flash GoodFET Firmware =
+
+ # Update/checkout to GoodFET SVN trunk (`svn co https://goodfet.svn.sourceforge.net/svnroot/goodfet goodfet`)
+ # Set parameters, make, and flash the GoodFET code:
+{{{
+$ cd goodfet/trunk/firmware
+$ export board=apimote1
+$ make clean install
+$ ../client/goodfet.bsl --speed=38400 --swap-reset-test -e -p goodfet.hex
+}}}
+
+= Reported Trouble =
+
+This is a first hardware revision board. If you have an error not seen here, please file a ticket or contact us.
+
+ * Under Linux, the FTDI chip may be recognized (`lsusb`) but it isn't showing up as a serial device. This is likely due to the FTDI chip being new and needing new drivers. Update your kernel.
