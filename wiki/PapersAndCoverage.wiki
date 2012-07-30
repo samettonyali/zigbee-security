@@ -22,7 +22,7 @@ Goodspeed, T.; Bratus, S.; Melgares, R; Speers, R.; Shapiro, R. Packets in Packe
   * [http://www.youtube.com/watch?v=SvCbIOwblqM&feature=player_embedded Video of Presentation]
   * [http://code.google.com/p/zigbee-security/downloads/detail?name=ZigBeeFFF_SlidesPDF.pdf PDF of Slides]
 
-== !Defcon 20: !Api-mote ==
+== Defcon 20 - Wireless Village: Api-mote ==
  * [http://code.google.com/p/zigbee-security/downloads/detail?name=Defcon20_Apimote_Slides.pdf PDF of Slides]
 
 = Technical Reports =
