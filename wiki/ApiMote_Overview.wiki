@@ -39,4 +39,4 @@ $ ../client/goodfet.bsl --speed=38400 --swap-reset-test -e -p goodfet.hex
 This is a first hardware revision board. If you have an error not seen here, please file a ticket or contact us.
 
    * Under Linux, the FTDI chip may be recognized (`lsusb`) but does not show up as a serial device. This is likely due to the Apimote utilizing a modern FTDI chip, requiring a newer Linux kernel. Ubuntu 11.10 and later, for example, come with already installed drivers that support the new FTDI. According to FTDI: "Support for the FTDI X chips has been built into the Linux kernel since the 3.0.0 release."
-  * The Linux FTDI X drivers are a bit flaky. OS X FTDI drivers have no issues. We will be working with Travis to roll out a linux patch, using the Facedancer. We suspect is has something to do with the new drivers failing to call a reset.
+  * The Linux FTDI X drivers are a bit flaky. OS X FTDI drivers have no issues. We will be working with Travis to roll out a linux patch.
