@@ -14,10 +14,12 @@ The Api-do project aims to make use of existing tools when possible, and not dup
 http://sourceforge.net/projects/dot4-tools/
   * "A group of useful tools for working with 802.15.4 networks. Currently includes a sniffer that interfaces with Wireshark in Windows/Linux (and maybe Mac OS X too), allowing you to do 802.15.4, ZigBee, and 6LoWPAN Sniffing."
   * Have not tested. Appears to have a named pipe for Wireshark, as well as a GUI application allowing for setup of sniffing and a "spectrum analyzer" graph showing RSSI on different channels.
+  * We provide this frame->Wireshark functionality in KillerBee via the standard zbwireshark tool.
 
 == Wireshark Zigbee Utility, alpha, by jakobt ==
 http://sourceforge.net/projects/wiresharkzigbee/
   * "Utility enabling easy capture and monitoring of Zigbee frames in Wireshark. This simple utility program implements a named pipe between Wireshark and the Freescale MC1322x USB dongle (support for other devices can relatively easily be added)."
+  * We provide this frame->Wireshark functionality in KillerBee via the standard zbwireshark tool.
 
 == WSN Analyzer - NSniffer, by nsniffer1, wjianqiang6 ==
 http://sourceforge.net/projects/nsniffer/
