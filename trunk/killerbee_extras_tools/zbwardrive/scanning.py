@@ -4,7 +4,6 @@ import sys
 import string
 import socket
 import struct
-import bitstring
 
 from killerbee import *
 from db import toHex
@@ -38,14 +37,19 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
                 pass
             return key
         else: #network designated by key is already being logged
-            if verbose: print 'Received frame is a beacon for a network we already found and are logging.'
+            if verbose:
+                print 'Received frame is a beacon for a network we already found and are logging.'
+                return None
     else: #frame doesn't look like a beacon according to scapy
-        #if verbose: print 'Received frame is not a beacon.', toHex(packet['bytes'])
+        if verbose:
+            print 'Received frame is not a beacon.', toHex(packet['bytes'])
+            print "\t", scapyd.summary()
+            return channel
         return None
 # --- end of doScan_processResponse ---
 
 # doScan
-def doScan(zbdb, verbose, arg_dblog):
+def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
     # Choose a device for injection scanning:
     scannerDevId = zbdb.get_devices_nextFree()
     # log to online mysql db or to some local pcap files?
@@ -67,11 +71,13 @@ def doScan(zbdb, verbose, arg_dblog):
     zbdb.update_devices_status(scannerDevId, 'Discovery')
 
     # Much of this code adapted from killerbee/tools/zbstumbler:main
+    # Could build this with Scapy but keeping manual construction for performance
     beacon = "\x03\x08\x00\xff\xff\xff\xff\x07" #beacon frame
     beaconp1 = beacon[0:2]  #beacon part before seqnum field
     beaconp2 = beacon[3:]   #beacon part after seqnum field
     seqnum = 0              #seqnum to use (will cycle)
     channel = 11            #starting channel (will cycle)
+    iteration = 0           #how many loops have we done through the channels?
     # Loop injecting and receiving packets
     while 1:
         if channel > 26: channel = 11
@@ -81,28 +87,38 @@ def doScan(zbdb, verbose, arg_dblog):
             kbscan.set_channel(channel)
         except Exception as e:
             raise Exception('Failed to set channel to %d (%s).' % (channel,e))
-        if verbose: print 'Injecting a beacon request on channel %d.' % channel
+        if verbose:
+            print 'Injecting a beacon request on channel %d.' % channel
         try:
-            beaconinj = ''.join([beaconp1, "%c" % seqnum, beaconp2])
+            beaconinj = beaconp1 + "%c" % seqnum + beaconp2
             kbscan.inject(beaconinj)
         except Exception, e:
             raise Exception('Unable to inject packet (%s).' % e)
 
-        # Process packets for 2 seconds looking for the beacon response frame
-        start = time.time()
-        while (start + 2 > time.time()):
+        # Process packets for staytime (default 2 seconds) looking for the beacon response frame
+        endtime = time.time() + staytime
+        while (endtime > time.time()):
             recvpkt = kbscan.pnext() #get a packet (is non-blocking)
             # Check for empty packet (timeout) and valid FCS
-            if recvpkt != None and recvpkt[1]:
+            if recvpkt != None and recvpkt['validcrc']:
                 #if verbose: print "Received frame."
                 newNetwork = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, arg_dblog)
+                # Ugly. Gives you either a key for a network or a channel. Call startCapture differently based on this.
                 if newNetwork != None:
-                    startCapture(zbdb, newNetwork, arg_dblog)
+                    if newNetwork <= 26 and newNetwork >= 11 and iteration > 2:
+                        #TODO
+                        # Maybe just increase a count and increase stay time on this channel to see if we get a few packets, thus making us care?
+                        # Maybe also do at least a full loop first every so often before going after these random packets...
+                        startCapture(zbdb, arg_dblog, channel=newNetwork)
+                    else:
+                        startCapture(zbdb, arg_dblog, key=newNetwork)
         kbscan.sniffer_off()
         seqnum += 1
         channel += 1
+        iteration += 1
 
     #TODO currently unreachable code, but maybe add a condition to break the infinite while loop in some circumstance to free that device for capture?
     kbscan.close()
     zbdb.update_devices_status(scannerDevId, 'Free')
 # --- end of doScan ---
+

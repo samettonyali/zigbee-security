@@ -8,7 +8,6 @@ import sys
 import string
 import socket
 import struct
-import bitstring
 import subprocess
 
 from killerbee import *
@@ -19,7 +18,7 @@ from capture import *
 # startScan
 # Detects attached interfaces
 # Initiates scanning using doScan()
-def startScan(zbdb, arg_verbose, arg_dblog):
+def startScan(zbdb, arg_verbose, arg_dblog, agressive=False):
     try:
         kb = KillerBee()
     except usb.USBError, e:
@@ -32,35 +31,38 @@ def startScan(zbdb, arg_verbose, arg_dblog):
         #print 'Error: Missing KillerBee USB hardware:', e
         print 'Error: Issue starting KillerBee instance:', e
         sys.exit(1)
-    kbdev_info = kbutils.devlist()
-    kb.close()
-    for i in range(0, len(kbdev_info)):
-        print 'Found device at %s: \'%s\'' % (kbdev_info[i][0], kbdev_info[i][1])
+    for kbdev in kbutils.devlist():
+        print 'Found device at %s: \'%s\'' % (kbdev[0], kbdev[1])
         zbdb.store_devices(
-            kbdev_info[i][0], #devid
-            kbdev_info[i][1], #devstr
-            kbdev_info[i][2]) #devserial
-    doScan(zbdb, arg_verbose, arg_dblog)
+            kbdev[0], #devid
+            kbdev[1], #devstr
+            kbdev[2]) #devserial
+    kb.close()
+    doScan(zbdb, arg_verbose, arg_dblog, agressive=agressive)
     return 0
 
 # Command line main function
 if __name__=='__main__':
     arg_verbose = False     #if True, give more verbosity
     arg_dblog   = False     #if True, try to log using KillerBee DBLogger
+    arg_argressive = False  #if True, capture on a channel even if no beacon response received but packets seen
     # parse command line options
     while len(sys.argv) > 1:
         op = sys.argv.pop(1)
         if op == '-v':
             arg_verbose = True
         if op == '-d':
-            arg_dblog = True  #attempt to log with KillerBee's dblog ability, to a MySQL db
+            arg_dblog = True      #attempt to log with KillerBee's dblog ability, to a MySQL db
+        if op == '-a':
+            arg_agressive = True  #go after packets on channels even if no beacon response received
 
     # try-except block to catch keyboard interrupt.
     zbdb = None
     try:
         zbdb = ZBScanDB()
-        startScan(zbdb, arg_verbose, arg_dblog)
+        startScan(zbdb, arg_verbose, arg_dblog, agressive=arg_agressive)
         zbdb.close()
     except KeyboardInterrupt:
         print 'Shutting down'
         if zbdb != None: zbdb.close()
+

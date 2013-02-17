@@ -11,6 +11,7 @@ class ZBScanDB:
     # Database utility functions for SQLite
     def __init__(self):
         self.channels = {11:None, 12:None, 13:None, 14:None, 15:None, 16:None, 17:None, 18:None, 19:None, 20:None, 21:None, 22:None, 23:None, 24:None, 25:None, 26:None}
+        # Devices is indexed by deviceId and stores a 4-tuple of device string, device serial, current status, and current channel
         self.devices = {}
 
     def close(self):
@@ -36,13 +37,14 @@ class ZBScanDB:
     def update_devices_start_capture(self, devid, channel):
         if devid not in self.devices:
             return None
-        self.devices[devid][2] = newstatus
-        self.devices[devid][3] = channel
+        (devstr, devserial, _, _) = self.devices[devid]
+        self.devices[devid] = (devstr, devserial, "Capture", channel)
 
     # Add a new network to the DB
     def store_networks(self, key, spanid, source, channel, packet):
         if channel not in self.channels:
             return None
+        # TODO note this only stores the most recent in the channel
         self.channels[channel] = (key, spanid, source, packet)
 
     # Return the channel of the network identified by key,
@@ -54,13 +56,19 @@ class ZBScanDB:
         return None
 
     def channel_status_logging(self, chan):
-        '''Returns False if we have not seen the network or are not currently logging it's channel, and returns True if we are currently logging it.'''
+        '''
+        Returns False if we have not seen the network or are not currently 
+        logging it's channel, and returns True if we are currently logging it.
+        @return boolean
+        '''
         if chan == None: raise Exception("None given for channel number")
         elif chan not in self.channels: raise Exception("Invalid channel")
         for dev in self.devices:
             if dev[3] == chan and dev[2] == 'Capture':
                 return True
+        return False
 # end of ZBScanDB class
 
 def toHex(bin):
     return ''.join(["%02x" % ord(x) for x in bin])
+
