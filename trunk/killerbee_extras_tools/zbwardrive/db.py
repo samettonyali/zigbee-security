@@ -5,10 +5,11 @@ import string
 # It is different from the online logging database.
 
 class ZBScanDB:
-    """API to interact with the database storing information 
-    for the zbscanning program"""
+    """
+    API to interact with the "database" storing information 
+    for the zbscanning program.
+    """
 
-    # Database utility functions for SQLite
     def __init__(self):
         self.channels = {11:None, 12:None, 13:None, 14:None, 15:None, 16:None, 17:None, 18:None, 19:None, 20:None, 21:None, 22:None, 23:None, 24:None, 25:None, 26:None}
         # Devices is indexed by deviceId and stores a 4-tuple of device string, device serial, current status, and current channel

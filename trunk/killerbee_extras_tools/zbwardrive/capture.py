@@ -9,16 +9,16 @@ triggers = []
 # startCapture
 # Given a database and a key into the database's networks table,
 #  initiate a pcap and online database capture.
-def startCapture(zbdb, arg_dblog, key=None, channel=None):
-    if key == None and channel == None:
-        raise Exception("Must give startCapture either key or channel parameters.")
+def startCapture(zbdb, arg_dblog, channel):
+    '''
+    Before calling, you should have already ensured the channel or the 
+    channel which the key is associated with does not already have an active
+    capture occuring.
+    '''
     nextDev = zbdb.get_devices_nextFree()
     #TODO if device not availabe, wait till one opens up, and then occupy it. if nothing opens within 10 seconds, say you don't have a device available
-    if channel == None:
-        capChan = zbdb.get_networks_channel(key)
-    else:
-        capChan = channel
-        key = "CH%d" % channel
+    capChan = channel
+    key = "CH%d" % channel
     if nextDev == None:
         print 'Cap%s: No free device to use for capture.' % key
         return None

@@ -18,15 +18,13 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
         if verbose: print "Received frame is a beacon."
         spanid = scapyd.gethumanval('src_panid')
         source = scapyd.gethumanval('src_addr')
-        #(src_addr_f, src_addr_v) = scapyd.getfield_and_val('src_addr')
-        #source = src_addr_f.i2repr(scapyd, src_addr_v)[2:]
         key = ''.join([spanid, source])
         #TODO if channel already being logged, ignore it as something new to capture
         if zbdb.channel_status_logging(channel) == False:
             if verbose:
                 print "A network on a channel not currently being logged replied to our beacon request."
                 #print hexdump(packet['bytes'])
-                #print scapyd.show()
+                #print scapyd.show2()
             # Store the network in local database so we treat it as already discovered by this program:
             zbdb.store_networks(key, spanid, source, channel, packet['bytes'])
             # Log to the mysql db or to the appropriate pcap file
@@ -35,16 +33,12 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
             else:
                 #TODO log this to a PPI pcap file maybe, so the packet is not lost? or print to screen?
                 pass
-            return key
+            return channel
         else: #network designated by key is already being logged
             if verbose:
                 print 'Received frame is a beacon for a network we already found and are logging.'
                 return None
     else: #frame doesn't look like a beacon according to scapy
-        if verbose:
-            print 'Received frame is not a beacon.', toHex(packet['bytes'])
-            print "\t", scapyd.summary()
-            return channel
         return None
 # --- end of doScan_processResponse ---
 
@@ -97,21 +91,35 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
 
         # Process packets for staytime (default 2 seconds) looking for the beacon response frame
         endtime = time.time() + staytime
+        nonbeacons = 0
         while (endtime > time.time()):
             recvpkt = kbscan.pnext() #get a packet (is non-blocking)
             # Check for empty packet (timeout) and valid FCS
             if recvpkt != None and recvpkt['validcrc']:
                 #if verbose: print "Received frame."
-                newNetwork = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, arg_dblog)
+                newNetworkChannel = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, arg_dblog)
                 # Ugly. Gives you either a key for a network or a channel. Call startCapture differently based on this.
-                if newNetwork != None:
-                    if newNetwork <= 26 and newNetwork >= 11 and iteration > 2:
-                        #TODO
-                        # Maybe just increase a count and increase stay time on this channel to see if we get a few packets, thus making us care?
-                        # Maybe also do at least a full loop first every so often before going after these random packets...
-                        startCapture(zbdb, arg_dblog, channel=newNetwork)
-                    else:
-                        startCapture(zbdb, arg_dblog, key=newNetwork)
+                if newNetworkChannel != None:
+                    startCapture(zbdb, arg_dblog, newNetworkChannel)
+                    nonbeacons = 0 # forget about any non-beacons, as we don't care, we saw a beacon!
+                    break          # made up our mind, stop wasting time
+                elif agressive:    # we may care even though it wasn't a beacon
+                    nonbeacons += 1
+                    if verbose:
+                        print 'Received frame (# %d) is not a beacon.' % nonbeacons, toHex(packet['bytes'])
+                        print "\t", scapyd.summary()
+
+        # If we're in agressive mode and didn't see a beacon, we have nonbeacons > 0.
+        # If we aren't logging the channel currently, and
+        # If we have already tried a loop through without being agressive
+        if nonbeacons > 0 and iteration > 2 and zbdb.channel_status_logging(channel) == False:
+            if verbose:
+                print "Start capture on %d as a channel without beacon." % channel
+            #TODO
+            # Maybe just increase a count and increase stay time on this channel to see if we get a few packets, thus making us care?
+            # Maybe also do at least a full loop first every so often before going after these random packets...
+            startCapture(zbdb, arg_dblog, channel)
+
         kbscan.sniffer_off()
         seqnum += 1
         channel += 1
