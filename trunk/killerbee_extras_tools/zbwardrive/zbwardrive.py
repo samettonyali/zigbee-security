@@ -14,29 +14,28 @@ from db import ZBScanDB
 from scanning import doScan
 
 # GPS Poller
-def gpsdPoller():
-    def __init__(self, currentGPS):
-        '''
-        @type currentGPS multiprocessing.Manager dict manager
-        @arg currentGPS store relavent pieces of up-to-date GPS info
-        '''
-        gpsd = gps(mode=WATCH_ENABLE) #starting the stream of info
-        while running:
-            gpsd.next()
-            if gpsd.fix.mode > 0:
-                lat = gpsd.fix.latitude
-                lng = gpsd.fix.longitude
-                alt = gpsd.fix.altitude
-                print 'latitude    ' , lat
-                print 'longitude   ' , lng
-                print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
-                print 'altitude (m)' , alt
-                currentGPS['lat'] = lat
-                currentGPS['lng'] = lng
-                currentGPS['alt'] = alt
-            else:
-                print "Waiting for a GPS fix."
-                #TODO timeout lat/lng/alt values if too old...?
+def gpsdPoller(currentGPS):
+    '''
+    @type currentGPS multiprocessing.Manager dict manager
+    @arg currentGPS store relavent pieces of up-to-date GPS info
+    '''
+    gpsd = gps(mode=WATCH_ENABLE) #starting the stream of info
+    while running:
+        gpsd.next()
+        if gpsd.fix.mode > 0:
+            lat = gpsd.fix.latitude
+            lng = gpsd.fix.longitude
+            alt = gpsd.fix.altitude
+            print 'latitude    ' , lat
+            print 'longitude   ' , lng
+            print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
+            print 'altitude (m)' , alt
+            currentGPS['lat'] = lat
+            currentGPS['lng'] = lng
+            currentGPS['alt'] = alt
+        else:
+            print "Waiting for a GPS fix."
+            #TODO timeout lat/lng/alt values if too old...?
 
 # startScan
 # Detects attached interfaces
