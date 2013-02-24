@@ -43,7 +43,7 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=False):
 # --- end of doScan_processResponse ---
 
 # doScan
-def doScan(zbdb, verbose, dblog=False, agressive=False, staytime=2):
+def doScan(zbdb, currentGPS, verbose=False, dblog=False, agressive=False, staytime=2):
     # Choose a device for injection scanning:
     scannerDevId = zbdb.get_devices_nextFree()
     # log to online mysql db or to some local pcap files?
@@ -102,7 +102,7 @@ def doScan(zbdb, verbose, dblog=False, agressive=False, staytime=2):
                 newNetworkChannel = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, dblog=dblog)
                 # Ugly. Gives you either a key for a network or a channel. Call startCapture differently based on this.
                 if newNetworkChannel != None:
-                    startCapture(zbdb, newNetworkChannel, dblog=dblog)
+                    startCapture(zbdb, newNetworkChannel, gps=currentGPS, dblog=dblog)
                     nonbeacons = 0 # forget about any non-beacons, as we don't care, we saw a beacon!
                     break          # made up our mind, stop wasting time
                 elif agressive:    # we may care even though it wasn't a beacon
@@ -119,7 +119,7 @@ def doScan(zbdb, verbose, dblog=False, agressive=False, staytime=2):
             #TODO
             # Maybe just increase a count and increase stay time on this channel to see if we get a few packets, thus making us care?
             # Maybe also do at least a full loop first every so often before going after these random packets...
-            startCapture(zbdb, channel, dblog=dblog)
+            startCapture(zbdb, channel, gps=currentGPS, dblog=dblog)
         elif verbose:
             print "Had {0} nonbeacon packets on loop iteration {1} and found that channel {2} being already logged was {3}.".format(
                 nonbeacons, iteration, channel, zbdb.channel_status_logging(channel))
