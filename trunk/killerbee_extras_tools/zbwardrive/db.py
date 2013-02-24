@@ -64,7 +64,7 @@ class ZBScanDB:
         '''
         if chan == None: raise Exception("None given for channel number")
         elif chan not in self.channels: raise Exception("Invalid channel")
-        for dev in self.devices:
+        for dev in self.devices.values():
             if dev[3] == chan and dev[2] == 'Capture':
                 return True
         return False
