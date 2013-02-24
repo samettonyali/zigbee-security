@@ -11,7 +11,7 @@ from capture import startCapture
 from scapy.all import Dot15d4, Dot15d4Beacon
 
 # doScan_processResponse
-def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
+def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=dblog):
     scapyd = Dot15d4(packet['bytes'])
     # Check if this is a beacon frame
     if isinstance(scapyd.payload, Dot15d4Beacon):
@@ -28,7 +28,7 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
             # Store the network in local database so we treat it as already discovered by this program:
             zbdb.store_networks(key, spanid, source, channel, packet['bytes'])
             # Log to the mysql db or to the appropriate pcap file
-            if arg_dblog == True:
+            if dblog == True:
                 kbscan.dblog.add_packet(full=packet, scapy=scapyd)
             else:
                 #TODO log this to a PPI pcap file maybe, so the packet is not lost? or print to screen?
@@ -43,11 +43,11 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, arg_dblog):
 # --- end of doScan_processResponse ---
 
 # doScan
-def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
+def doScan(zbdb, verbose, dblog=False, agressive=False, staytime=2):
     # Choose a device for injection scanning:
     scannerDevId = zbdb.get_devices_nextFree()
     # log to online mysql db or to some local pcap files?
-    kbscan = KillerBee(device=scannerDevId, datasource=("Wardrive Live" if arg_dblog else None))
+    kbscan = KillerBee(device=scannerDevId, datasource=("Wardrive Live" if dblog else None))
     #  we want one that can do injection
     inspectedDevs = []
     while (kbscan.check_capability(KBCapabilities.INJECT) == False):
@@ -57,7 +57,7 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
         scannerDevId = zbdb.get_devices_nextFree()
         if scannerDevId == None:
             raise Exception("Error: No free devices capable of injection were found.")
-        kbscan = KillerBee(device=scannerDevId, datasource=("Wardrive Live" if arg_dblog else None))
+        kbscan = KillerBee(device=scannerDevId, datasource=("Wardrive Live" if dblog else None))
     #  return devices that we didn't choose to the free state
     for inspectedDevId in inspectedDevs:
         zbdb.update_devices_status(inspectedDevId, 'Free')
@@ -99,10 +99,10 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
             # Check for empty packet (timeout) and valid FCS
             if recvpkt != None and recvpkt['validcrc']:
                 #if verbose: print "Received frame."
-                newNetworkChannel = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, arg_dblog)
+                newNetworkChannel = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, dblog=dblog)
                 # Ugly. Gives you either a key for a network or a channel. Call startCapture differently based on this.
                 if newNetworkChannel != None:
-                    startCapture(zbdb, arg_dblog, newNetworkChannel)
+                    startCapture(zbdb, newNetworkChannel, dblog=dblog)
                     nonbeacons = 0 # forget about any non-beacons, as we don't care, we saw a beacon!
                     break          # made up our mind, stop wasting time
                 elif agressive:    # we may care even though it wasn't a beacon
@@ -119,7 +119,7 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
             #TODO
             # Maybe just increase a count and increase stay time on this channel to see if we get a few packets, thus making us care?
             # Maybe also do at least a full loop first every so often before going after these random packets...
-            startCapture(zbdb, arg_dblog, channel)
+            startCapture(zbdb, channel, dblog=dblog)
         elif verbose:
             print "Had {0} nonbeacon packets on loop iteration {1} and found that channel {2} being already logged was {3}.".format(
                 nonbeacons, iteration, channel, zbdb.channel_status_logging(channel))

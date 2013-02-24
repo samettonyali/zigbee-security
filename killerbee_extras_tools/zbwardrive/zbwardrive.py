@@ -6,16 +6,42 @@
 
 import sys
 import argparse
+from multiprocessing import Process, Manager
 from usb import USBError
 
 from killerbee import KillerBee, kbutils
 from db import ZBScanDB
 from scanning import doScan
 
+# GPS Poller
+def gpsdPoller():
+    def __init__(self, currentGPS):
+        '''
+        @type currentGPS multiprocessing.Manager dict manager
+        @arg currentGPS store relavent pieces of up-to-date GPS info
+        '''
+        gpsd = gps(mode=WATCH_ENABLE) #starting the stream of info
+        while running:
+            gpsd.next()
+            if gpsd.fix.mode > 0:
+                lat = gpsd.fix.latitude
+                lng = gpsd.fix.longitude
+                alt = gpsd.fix.altitude
+                print 'latitude    ' , lat
+                print 'longitude   ' , lng
+                print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
+                print 'altitude (m)' , alt
+                currentGPS['lat'] = lat
+                currentGPS['lng'] = lng
+                currentGPS['alt'] = alt
+            else:
+                print "Waiting for a GPS fix."
+                #TODO timeout lat/lng/alt values if too old...?
+
 # startScan
 # Detects attached interfaces
 # Initiates scanning using doScan()
-def startScan(zbdb, arg_verbose, arg_dblog, agressive=False):
+def startScan(zbdb, arg_verbose, dblog=dblog, agressive=False):
     try:
         kb = KillerBee()
     except usb.USBError, e:
@@ -23,11 +49,11 @@ def startScan(zbdb, arg_verbose, arg_dblog, agressive=False):
             print 'Error: Permissions error, try running using sudo.'
         else:
             print 'Error: USBError:', e
-        sys.exit(1)
+        return False
     except Exception, e:
         #print 'Error: Missing KillerBee USB hardware:', e
         print 'Error: Issue starting KillerBee instance:', e
-        sys.exit(1)
+        return False
     for kbdev in kbutils.devlist():
         print 'Found device at %s: \'%s\'' % (kbdev[0], kbdev[1])
         zbdb.store_devices(
@@ -35,8 +61,8 @@ def startScan(zbdb, arg_verbose, arg_dblog, agressive=False):
             kbdev[1], #devstr
             kbdev[2]) #devserial
     kb.close()
-    doScan(zbdb, arg_verbose, arg_dblog, agressive=agressive)
-    return 0
+    doScan(zbdb, arg_verbose, dblog=dblog, agressive=agressive)
+    return True
 
 # Command line main function
 if __name__=='__main__':
@@ -52,16 +78,29 @@ it is selected as 'of interest' which can change based on the -a flag.
     parser.add_argument('-d', '--db', dest='dblog', action='store_true',
                         help='Enable KillerBee\'s log-to-database functionality')
     parser.add_argument('-a', '--agressive', dest='agressive', action='store_true',
-                        help='Initiate capture on channels where packets were seen, even if no beacon response was received.')
+                        help='Initiate capture on channels where packets were seen, even if no beacon response was received')
+    parser.add_argument('-g', '--gps', dest='gps', action='store_true',
+                        help='Connect to gpsd and grab location data as available to enhance PCAPs')
     args = parser.parse_args()
 
     # try-except block to catch keyboard interrupt.
     zbdb = None
+    gpsp = None
+    manager = Manager()
+    devices = manager.dict()
+    currentGPS = manager.dict()
     try:
+        if args.gps:
+            from gps import gps
+            gpsp = Process(target=gpsdPoller, args=(currentGPS, ))
+            gpsp.start()
         zbdb = ZBScanDB()
-        startScan(zbdb, args.verbose, args.dblog, agressive=args.agressive)
+        #TODO check return value from startScan
+        startScan(zbdb, args.verbose, dblog=args.dblog, agressive=args.agressive)
         zbdb.close()
     except KeyboardInterrupt:
         print 'Shutting down'
         if zbdb != None: zbdb.close()
+        if gpsp != None: gpsp.terminate()
+
 
