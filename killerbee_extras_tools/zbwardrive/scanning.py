@@ -119,6 +119,9 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
             # Maybe just increase a count and increase stay time on this channel to see if we get a few packets, thus making us care?
             # Maybe also do at least a full loop first every so often before going after these random packets...
             startCapture(zbdb, arg_dblog, channel)
+        elif verbose:
+            print "Had {0} nonbeacon packets on loop iteration {1} and found that channel {2} being already logged was {3}.".format(
+                nonbeacons, iteration, channel, zbdb.channel_status_logging(channel))
 
         kbscan.sniffer_off()
         seqnum += 1
