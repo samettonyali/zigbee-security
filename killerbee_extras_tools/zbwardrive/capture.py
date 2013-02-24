@@ -40,14 +40,14 @@ def interrupt(signum, frame):
 #  exits when trigger (threading.Event object) is set.
 #TODO change to multiprocessing, with the db having shared state
 class CaptureThread(threading.Thread):
-    def __init__(self, channel, devstring, trigger, dblog=False, gps=False):
+    def __init__(self, channel, devstring, trigger, dblog=False, gps=None):
         self.channel = channel
         self.rf_freq_mhz = (channel - 10) * 5 + 2400
         self.devstring = devstring
         self.trigger = trigger
         self.packetcount = 0
         self.useDBlog = dblog
-        self.useGPS = gps
+        self.currentGPS = gps
 
         timeLabel = datetime.now().strftime('%Y%m%d-%H%M')
         fname = 'zb_c%s_%s.pcap' % (channel, timeLabel) #fname is -w equiv
@@ -70,12 +70,12 @@ class CaptureThread(threading.Thread):
                 self.packetcount+=1
                 if self.useDBlog: #by checking, we avoid wasted time and warnings
                     self.kb.dblog.add_packet(full=packet)
-                if self.useGPS and 'lat' in gps:
+                if self.currentGPS != None and 'lat' in self.currentGPS:
                     # We use the existince of the 'lat' key to promise ourselves
                     # that the lat, lng, and alt keys are there.
                     self.pd.pcap_dump(packet[0], 
                           freq_mhz=self.rf_freq_mhz, ant_dbm=packet['dbm'], 
-                          location=(gps['lng'], gps['lat'], gps['alt'])   )
+                          location=(self.currentGPS['lng'], self.currentGPS['lat'], self.currentGPS['alt'])   )
                 else:
                     self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
                                       ant_dbm=packet['dbm'])
