@@ -106,7 +106,7 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
                 elif agressive:    # we may care even though it wasn't a beacon
                     nonbeacons += 1
                     if verbose:
-                        print 'Received frame (# %d) is not a beacon.' % nonbeacons, toHex(packet['bytes'])
+                        print 'Received frame (# %d) is not a beacon.' % nonbeacons, toHex(recvpkt['bytes'])
                         print "\t", scapyd.summary()
 
         # If we're in agressive mode and didn't see a beacon, we have nonbeacons > 0.
