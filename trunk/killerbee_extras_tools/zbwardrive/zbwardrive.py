@@ -41,7 +41,7 @@ def gpsdPoller():
 # startScan
 # Detects attached interfaces
 # Initiates scanning using doScan()
-def startScan(zbdb, arg_verbose, dblog=dblog, agressive=False):
+def startScan(zbdb, arg_verbose, dblog=False, agressive=False):
     try:
         kb = KillerBee()
     except usb.USBError, e:

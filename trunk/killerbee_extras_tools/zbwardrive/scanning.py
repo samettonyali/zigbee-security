@@ -11,7 +11,7 @@ from capture import startCapture
 from scapy.all import Dot15d4, Dot15d4Beacon
 
 # doScan_processResponse
-def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=dblog):
+def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=False):
     scapyd = Dot15d4(packet['bytes'])
     # Check if this is a beacon frame
     if isinstance(scapyd.payload, Dot15d4Beacon):
