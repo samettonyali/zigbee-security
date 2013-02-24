@@ -74,7 +74,9 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
     iteration = 0           #how many loops have we done through the channels?
     # Loop injecting and receiving packets
     while 1:
-        if channel > 26: channel = 11
+        if channel > 26:
+            channel = 11
+            iteration += 1
         if seqnum > 255: seqnum = 0
         try:
             #if verbose: print 'Setting channel to %d' % channel
@@ -107,7 +109,6 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
                     nonbeacons += 1
                     if verbose:
                         print 'Received frame (# %d) is not a beacon.' % nonbeacons, toHex(recvpkt['bytes'])
-                        print "\t", scapyd.summary()
 
         # If we're in agressive mode and didn't see a beacon, we have nonbeacons > 0.
         # If we aren't logging the channel currently, and
@@ -126,7 +127,6 @@ def doScan(zbdb, verbose, arg_dblog, agressive=False, staytime=2):
         kbscan.sniffer_off()
         seqnum += 1
         channel += 1
-        iteration += 1
 
     #TODO currently unreachable code, but maybe add a condition to break the infinite while loop in some circumstance to free that device for capture?
     kbscan.close()

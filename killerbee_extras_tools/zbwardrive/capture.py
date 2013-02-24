@@ -38,6 +38,7 @@ def interrupt(signum, frame):
 
 # Thread to capture a given channel, using a given device, to a given filename
 #  exits when trigger (threading.Event object) is set.
+#TODO change to multiprocessing, with the db having shared state
 class CaptureThread(threading.Thread):
     def __init__(self, channel, devstring, trigger, arg_dblog):
         self.channel = channel
