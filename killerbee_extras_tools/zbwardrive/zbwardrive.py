@@ -14,6 +14,8 @@ from killerbee import KillerBee, kbutils
 from db import ZBScanDB
 from scanning import doScan
 
+GPS_FREQUENCY=3 #in seconds
+
 # GPS Poller
 def gpsdPoller(currentGPS):
     '''
@@ -28,21 +30,22 @@ def gpsdPoller(currentGPS):
     try:
         while True:
             gpsd.poll()
-            if gpsd.fix.mode > 0:
+            if gpsd.fix.mode > 1: #1=NO_FIX, 2=FIX, 3=DGPS_FIX
                 lat = gpsd.fix.latitude
                 lng = gpsd.fix.longitude
                 alt = gpsd.fix.altitude
-                print 'latitude    ' , lat
-                print 'longitude   ' , lng
-                print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
-                print 'altitude (m)' , alt
+                #print 'latitude    ' , lat
+                #print 'longitude   ' , lng
+                #TODO do we want to use the GPS time in any way?
+                #print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
+                #print 'altitude (m)' , alt
                 currentGPS['lat'] = lat
                 currentGPS['lng'] = lng
                 currentGPS['alt'] = alt
             else:
                 print "Waiting for a GPS fix."
                 #TODO timeout lat/lng/alt values if too old...?
-            sleep(3)
+            sleep(GPS_FREQUENCY)
     except KeyboardInterrupt:
         print "Got KeyboardInterrupt in gpsdPoller, returning."
         return
@@ -50,7 +53,7 @@ def gpsdPoller(currentGPS):
 # startScan
 # Detects attached interfaces
 # Initiates scanning using doScan()
-def startScan(zbdb, arg_verbose, dblog=False, agressive=False):
+def startScan(zbdb, currentGPS, verbose=False, dblog=False, agressive=False):
     try:
         kb = KillerBee()
     except usb.USBError, e:
@@ -70,7 +73,7 @@ def startScan(zbdb, arg_verbose, dblog=False, agressive=False):
             kbdev[1], #devstr
             kbdev[2]) #devserial
     kb.close()
-    doScan(zbdb, arg_verbose, dblog=dblog, agressive=agressive)
+    doScan(zbdb, currentGPS, verbose=verbose, dblog=dblog, agressive=agressive)
     return True
 
 # Command line main function
@@ -95,17 +98,21 @@ it is selected as 'of interest' which can change based on the -a flag.
     # try-except block to catch keyboard interrupt.
     zbdb = None
     gpsp = None
-    manager = Manager()
-    devices = manager.dict()
-    currentGPS = manager.dict()
     try:
+        # Some shared state for multiprocessing use
+        manager = Manager()
+        devices = manager.dict()
+        currentGPS = None
         if args.gps:
+            currentGPS = manager.dict()
             gpsp = Process(target=gpsdPoller, args=(currentGPS, ))
             gpsp.start()
+
         zbdb = ZBScanDB()
         #TODO check return value from startScan
-        startScan(zbdb, args.verbose, dblog=args.dblog, agressive=args.agressive)
+        startScan(zbdb, currentGPS, verbose=args.verbose, dblog=args.dblog, agressive=args.agressive)
         zbdb.close()
+
     except KeyboardInterrupt:
         print 'Shutting down'
         if zbdb != None: zbdb.close()

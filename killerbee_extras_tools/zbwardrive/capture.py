@@ -70,9 +70,12 @@ class CaptureThread(threading.Thread):
                 self.packetcount+=1
                 if self.useDBlog: #by checking, we avoid wasted time and warnings
                     self.kb.dblog.add_packet(full=packet)
-                if self.useGPS:
-                    self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
-                          ant_dbm=packet['dbm'], location=None)
+                if self.useGPS and 'lat' in gps:
+                    # We use the existince of the 'lat' key to promise ourselves
+                    # that the lat, lng, and alt keys are there.
+                    self.pd.pcap_dump(packet[0], 
+                          freq_mhz=self.rf_freq_mhz, ant_dbm=packet['dbm'], 
+                          location=(gps['lng'], gps['lat'], gps['alt'])   )
                 else:
                     self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
                                       ant_dbm=packet['dbm'])
