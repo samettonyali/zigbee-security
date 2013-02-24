@@ -9,7 +9,7 @@ triggers = []
 # startCapture
 # Given a database and a key into the database's networks table,
 #  initiate a pcap and online database capture.
-def startCapture(zbdb, arg_dblog, channel):
+def startCapture(zbdb, channel, dblog=False, gps=False):
     '''
     Before calling, you should have already ensured the channel or the 
     channel which the key is associated with does not already have an active
@@ -26,7 +26,7 @@ def startCapture(zbdb, arg_dblog, channel):
     signal.signal(signal.SIGINT, interrupt)
     trigger = threading.Event()
     triggers.append(trigger)
-    CaptureThread(capChan, nextDev, trigger, arg_dblog).start()
+    CaptureThread(capChan, nextDev, trigger, dblog=dblog, gps=gps).start()
     zbdb.update_devices_start_capture(nextDev, capChan)
 
 # Called on keyboard interput to exit threads and exit the scanner script.
@@ -40,13 +40,14 @@ def interrupt(signum, frame):
 #  exits when trigger (threading.Event object) is set.
 #TODO change to multiprocessing, with the db having shared state
 class CaptureThread(threading.Thread):
-    def __init__(self, channel, devstring, trigger, arg_dblog):
+    def __init__(self, channel, devstring, trigger, dblog=False, gps=False):
         self.channel = channel
         self.rf_freq_mhz = (channel - 10) * 5 + 2400
         self.devstring = devstring
         self.trigger = trigger
         self.packetcount = 0
-        self.arg_dblog = arg_dblog
+        self.useDBlog = dblog
+        self.useGPS = gps
 
         timeLabel = datetime.now().strftime('%Y%m%d-%H%M')
         fname = 'zb_c%s_%s.pcap' % (channel, timeLabel) #fname is -w equiv
@@ -55,7 +56,7 @@ class CaptureThread(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        if self.arg_dblog == True:
+        if self.useDBlog == True:
             self.kb = KillerBee(device=self.devstring, datasource="Wardrive Live")
         else:
             self.kb = KillerBee(device=self.devstring)
@@ -67,11 +68,15 @@ class CaptureThread(threading.Thread):
             packet = self.kb.pnext()
             if packet != None:
                 self.packetcount+=1
-                if self.arg_dblog == True: #by checking, we avoid wasted time and warnings
+                if self.useDBlog: #by checking, we avoid wasted time and warnings
                     self.kb.dblog.add_packet(full=packet)
-                self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
-                                  ant_dbm=packet['dbm'])
-            #TODO if no packet detected in a certain length, and we know other channels want capture, then quit
+                if self.useGPS:
+                    self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
+                          ant_dbm=packet['dbm'], location=None)
+                else:
+                    self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
+                                      ant_dbm=packet['dbm'])
+            #TODO if no packet detected in a certain period of time, and we know other channels want capture, then quit
 
         # trigger threading.Event set to false, so shutdown thread
         self.kb.sniffer_off()
