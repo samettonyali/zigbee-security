@@ -6,6 +6,7 @@
 
 import sys
 import argparse
+from time import sleep
 from multiprocessing import Process, Manager
 from usb import USBError
 
@@ -19,23 +20,32 @@ def gpsdPoller(currentGPS):
     @type currentGPS multiprocessing.Manager dict manager
     @arg currentGPS store relavent pieces of up-to-date GPS info
     '''
-    gpsd = gps(mode=WATCH_ENABLE) #starting the stream of info
-    while running:
-        gpsd.next()
-        if gpsd.fix.mode > 0:
-            lat = gpsd.fix.latitude
-            lng = gpsd.fix.longitude
-            alt = gpsd.fix.altitude
-            print 'latitude    ' , lat
-            print 'longitude   ' , lng
-            print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
-            print 'altitude (m)' , alt
-            currentGPS['lat'] = lat
-            currentGPS['lng'] = lng
-            currentGPS['alt'] = alt
-        else:
-            print "Waiting for a GPS fix."
-            #TODO timeout lat/lng/alt values if too old...?
+    import gps
+    gpsd = gps.gps()
+    gpsd.poll()
+    gpsd.stream()
+
+    try:
+        while True:
+            gpsd.poll()
+            if gpsd.fix.mode > 0:
+                lat = gpsd.fix.latitude
+                lng = gpsd.fix.longitude
+                alt = gpsd.fix.altitude
+                print 'latitude    ' , lat
+                print 'longitude   ' , lng
+                print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
+                print 'altitude (m)' , alt
+                currentGPS['lat'] = lat
+                currentGPS['lng'] = lng
+                currentGPS['alt'] = alt
+            else:
+                print "Waiting for a GPS fix."
+                #TODO timeout lat/lng/alt values if too old...?
+            sleep(3)
+    except KeyboardInterrupt:
+        print "Got KeyboardInterrupt in gpsdPoller, returning."
+        return
 
 # startScan
 # Detects attached interfaces
@@ -90,7 +100,6 @@ it is selected as 'of interest' which can change based on the -a flag.
     currentGPS = manager.dict()
     try:
         if args.gps:
-            from gps import gps
             gpsp = Process(target=gpsdPoller, args=(currentGPS, ))
             gpsp.start()
         zbdb = ZBScanDB()
