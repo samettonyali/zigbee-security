@@ -14,23 +14,21 @@ from scapy.all import Dot15d4, Dot15d4Beacon
 MIN_ITERATIONS_AGRESSIVE = 0
 
 # doScan_processResponse
-def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=False):
+def doScan_processResponse(packet, channel, zbdb, kbscan, verbose=False, dblog=False):
     scapyd = Dot15d4(packet['bytes'])
     # Check if this is a beacon frame
     if isinstance(scapyd.payload, Dot15d4Beacon):
         if verbose: print "Received frame is a beacon."
         try:
-            spanid = scapyd.gethumanval('src_panid')
-            source = scapyd.gethumanval('src_addr')
+            spanid = scapyd.src_panid
+            source = scapyd.src_addr
         except Exception as e:
             print "DEBUG: Issue fetching src panid/addr from scapy packet ({0}).".format(e)
             print "\t{0}".format(scapyd.summary())
             print scapyd.show2()
-            print "trying raw panid: %x" % scapyd.src_panid
-            print "trying raw addr: %x" % scapyd.src_addr
             print "-"*25
             return None #ignore this received frame for now
-        key = ''.join([spanid, source])
+        key = '%x%x' % (spanid, source)
         #TODO if channel already being logged, ignore it as something new to capture
         if zbdb.channel_status_logging(channel) == False:
             if verbose:
@@ -109,8 +107,7 @@ def doScan(zbdb, currentGPS, verbose=False, dblog=False, agressive=False, stayti
             # Check for empty packet (timeout) and valid FCS
             if recvpkt != None and recvpkt['validcrc']:
                 #if verbose: print "Received frame."
-                newNetworkChannel = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose, dblog=dblog)
-                # Ugly. Gives you either a key for a network or a channel. Call startCapture differently based on this.
+                newNetworkChannel = doScan_processResponse(recvpkt, channel, zbdb, kbscan, verbose=verbose, dblog=dblog)
                 if newNetworkChannel != None:
                     startCapture(zbdb, newNetworkChannel, gps=currentGPS, dblog=dblog)
                     nonbeacons = 0 # forget about any non-beacons, as we don't care, we saw a beacon!
