@@ -16,8 +16,14 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=False):
     # Check if this is a beacon frame
     if isinstance(scapyd.payload, Dot15d4Beacon):
         if verbose: print "Received frame is a beacon."
-        spanid = scapyd.gethumanval('src_panid')
-        source = scapyd.gethumanval('src_addr')
+        try:
+            spanid = scapyd.gethumanval('src_panid')
+            source = scapyd.gethumanval('src_addr')
+        except Exception as e:
+            print "DEBUG: Issue fetching src panid/addr from scapy packet ({0}).".format(e)
+            print "\t{0}".format(scapyd.summary())
+            print scapyd.show2()
+            print "-"*25
         key = ''.join([spanid, source])
         #TODO if channel already being logged, ignore it as something new to capture
         if zbdb.channel_status_logging(channel) == False:
