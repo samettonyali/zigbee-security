@@ -26,10 +26,8 @@ def doScan_processResponse(packet, channel, zbdb, kbscan, verbose, dblog=False):
             print "DEBUG: Issue fetching src panid/addr from scapy packet ({0}).".format(e)
             print "\t{0}".format(scapyd.summary())
             print scapyd.show2()
-            print "trying raw panid:", scapyd.src_panid
-            print "trying raw addr:", scapyd.src_addr
-            print "trying child human panid:", scapyd.payload.gethumanval('src_panid')
-            print "trying child human addr:", scapyd.payload.gethumanval('src_addr')
+            print "trying raw panid: %x" % scapyd.src_panid
+            print "trying raw addr: %x" % scapyd.src_addr
             print "-"*25
             return None #ignore this received frame for now
         key = ''.join([spanid, source])
