@@ -70,15 +70,24 @@ class CaptureThread(threading.Thread):
                 self.packetcount+=1
                 if self.useDBlog: #by checking, we avoid wasted time and warnings
                     self.kb.dblog.add_packet(full=packet)
-                if self.currentGPS != None and 'lat' in self.currentGPS:
-                    # We use the existince of the 'lat' key to promise ourselves
-                    # that the lat, lng, and alt keys are there.
-                    self.pd.pcap_dump(packet[0], 
-                          freq_mhz=self.rf_freq_mhz, ant_dbm=packet['dbm'], 
-                          location=(self.currentGPS['lng'], self.currentGPS['lat'], self.currentGPS['alt'])   )
-                else:
-                    self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
-                                      ant_dbm=packet['dbm'])
+                try:
+                    if self.currentGPS != None and 'lat' in self.currentGPS:
+                        # We use the existince of the 'lat' key to promise ourselves
+                        # that the lat, lng, and alt keys are there.
+                        self.pd.pcap_dump(packet[0], 
+                              freq_mhz=self.rf_freq_mhz, ant_dbm=packet['dbm'], 
+                              location=(self.currentGPS['lng'], self.currentGPS['lat'], self.currentGPS['alt'])   )
+                    else:
+                        self.pd.pcap_dump(packet[0], freq_mhz=self.rf_freq_mhz, 
+                                          ant_dbm=packet['dbm'])
+                except IOError as e:
+                    #TODO replace this with code that ensures the captures exit before the manager
+                    #     maybe have a shared memory int that is the number of currently running capture threads,
+                    #     or use a shared state db, and only once all devices are marked free does the manager die
+                    if e.errno == 32: #broken pipe, likely from manager being shut down
+                        continue
+                    else:
+                        raise e
             #TODO if no packet detected in a certain period of time, and we know other channels want capture, then quit
 
         # trigger threading.Event set to false, so shutdown thread
