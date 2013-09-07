@@ -8,7 +8,7 @@ import sys
 import string
 import socket
 import struct
-import bitstring
+#import bitstring
 
 from killerbee import *
 from capture import *
