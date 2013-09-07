@@ -4,7 +4,7 @@
 # Promiscious capture on multiple channels at once
 
 import gps, time, os, signal, sys, operator, threading
-import string, socket, struct, bitstring, datetime
+import string, socket, struct, datetime
 
 from killerbee import *
 import Queue
